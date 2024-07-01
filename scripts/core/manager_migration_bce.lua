@@ -6,7 +6,7 @@
 -- luacheck: globals MigrationManagerBCE BCEManager
 -- luacheck: globals migration migrateItems migrateSpells migrateCustomEffects migrateCombatTracker migrateCharSheet
 -- luacheck: globals migrateNPC migratePowers  migrateAdvancedEffects migrateKnK  migrationHelper migrateEffect
--- luacheck: globals slashOpen onClose onTabletopInit onInit
+-- luacheck: globals slashOpen onClose onTabletopInit onInit deprecateTagMsg
 local aMigrate = {
     'DUSE',
     'ATURN',
@@ -38,9 +38,14 @@ function onInit()
 end
 function onTabletopInit()
     if Session.IsHost then
-        local nodeMigrate = DB.getRoot().createChild('bce_migrate')
-        local nodeNoShow = DB.getChild(nodeMigrate, 'noshow')
-        if nodeMigrate and (not nodeNoShow or DB.getValue(nodeNoShow, '', 0) == 0) then
+        local nodeMigrate = DB.getRoot().createChild('bce_migrate');
+        local nodeNoShow = DB.getChild(nodeMigrate, 'noshow');
+        if not nodeNoShow then
+            DB.setValue(nodeMigrate, 'noshow', 'number', 1);
+            nodeNoShow = DB.getChild(nodeMigrate, 'noshow');
+        end
+
+        if nodeMigrate and DB.getValue(nodeNoShow, '', 0) == 0 then
             Interface.openWindow('bce_migrator', nodeMigrate);
         end
     end
@@ -462,4 +467,15 @@ function migrateEffect(nodeEffect, aEffectComps, index, rEffectComp)
         -- end
     end
     return sApply:upper(), sChangeState:upper();
+end
+
+function deprecateTagMsg(sTag)
+    if sTag and sTag ~= '' then
+        local msgData = {
+            text = sTag .. ' is deprecated. Use /migrate_effects to migrate BCE effects to new format.',
+            font = 'narratorfont',
+            icon = 'BetterCombatEffects'
+        }
+        Comm.addChatMessage(msgData)
+    end
 end

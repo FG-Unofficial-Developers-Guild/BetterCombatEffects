@@ -3,7 +3,7 @@
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
 --
--- luacheck: globals CombatManagerBCE BCEManager EffectManagerBCE
+-- luacheck: globals CombatManagerBCE BCEManager EffectManagerBCE MigrationManagerBCE
 -- luacheck: globals onInit onTabletopInit turnStart turnEnd
 -- luacheck: globals setCustomProcessTurnStart removeCustomProcessTurnStart onCustomProcessTurnStart
 -- luacheck: globals setCustomProcessTurnEnd removeCustomProcessTurnEnd onCustomProcessTurnEnd RulesetEffectManager
@@ -60,6 +60,7 @@ function turnStart(sourceNodeCT)
                             BCEManager.modifyEffect(tEffect.sEffectNode, 'Remove');
                         end
                     end
+                    MigrationManagerBCE.deprecateTagMsg(sTag);
                 end
             end
         end
@@ -75,6 +76,7 @@ function turnStart(sourceNodeCT)
                     if nDuration == 1 and sSource == DB.getPath(sourceNodeCT) then
                         BCEManager.modifyEffect(tEffect.sEffectNode, 'Remove');
                     end
+                    MigrationManagerBCE.deprecateTagMsg('STURNRS');
                 end
             end
         end
@@ -87,7 +89,6 @@ function turnEnd(sourceNodeCT)
     if not sourceNodeCT then
         return;
     end
-    EffectManagerBCE.changeState(sourceNodeCT, false);
 
     local rSource = ActorManager.resolveActor(sourceNodeCT);
     if OptionsManager.isOption('DEPRECATE_CHANGE_STATE', 'on') then
@@ -112,6 +113,7 @@ function turnEnd(sourceNodeCT)
                             BCEManager.modifyEffect(tEffect.sEffectNode, 'Remove');
                         end
                     end
+                    MigrationManagerBCE.deprecateTagMsg(sTag);
                 end
             end
 
@@ -127,11 +129,13 @@ function turnEnd(sourceNodeCT)
 
                             BCEManager.modifyEffect(tEffect.sEffectNode, 'Remove');
                         end
+                        MigrationManagerBCE.deprecateTagMsg('STURNRE');
                     end
                 end
             end
         end
     end
+    EffectManagerBCE.changeState(sourceNodeCT, false);
 end
 
 ------------------ CUSTOM BCE FUNTION HOOKS ------------------

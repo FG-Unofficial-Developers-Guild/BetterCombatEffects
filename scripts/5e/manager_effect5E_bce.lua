@@ -3,7 +3,7 @@
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
 --
--- luacheck: globals EffectManager5EBCE BCEManager ActionSaveDnDBCE EffectManagerBCE
+-- luacheck: globals EffectManager5EBCE BCEManager ActionSaveDnDBCE EffectManagerBCE MigrationManagerBCE
 -- luacheck: globals onInit onClose customOnEffectAddIgnoreCheck addEffectPre5E dropConcentration
 -- luacheck: globals moddedGetEffectsByType moddedHasEffectCondition moddedHasEffect customEncodeEffectForCT customDecodeEffectFromCT
 local bAdvancedEffects = nil;
@@ -86,7 +86,15 @@ function customOnEffectAddIgnoreCheck(nodeCT, rEffect)
     BCEManager.chat('customOnEffectAddIgnoreCheck : ');
     local sDuplicateMsg = EffectManager5E.onEffectAddIgnoreCheck(nodeCT, rEffect);
     local bIgnoreDuration = OptionsManager.isOption('CONSIDER_DUPLICATE_DURATION', 'off');
-    if OptionsManager.isOption('ALLOW_DUPLICATE_EFFECT', 'off') and not rEffect.sName:match('STACK') then
+    local bStack = false;
+    for _, sEffectComp in ipairs(EffectManager.parseEffect(rEffect.sName)) do
+        local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp);
+        if rEffectComp.original == 'STACK' then
+            bStack = true;
+            break
+        end
+    end
+    if OptionsManager.isOption('ALLOW_DUPLICATE_EFFECT', 'off') and not bStack then
         for _, nodeEffect in ipairs(DB.getChildList(nodeCT, 'effects')) do
             if (DB.getValue(nodeEffect, 'label', '') == rEffect.sName) and (DB.getValue(nodeEffect, 'init', 0) == rEffect.nInit) and
                 (bIgnoreDuration or (DB.getValue(nodeEffect, 'duration', 0) == rEffect.nDuration)) and
